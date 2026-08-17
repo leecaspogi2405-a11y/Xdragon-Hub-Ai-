@@ -194,6 +194,7 @@
             flex-direction: column;
             gap: 15px;
             border: 2px solid #e0e0e0;
+            min-height: 300px;
         }
 
         .message {
@@ -321,7 +322,7 @@
             border-radius: 15px;
             padding: 15px;
             border: 2px solid #e0e0e0;
-            max-height: 200px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
@@ -440,40 +441,52 @@
         // ==================== CLOUDBASE/DATASTORE ====================
         class CloudBase {
             constructor() {
+                this.initialize();
+            }
+
+            initialize() {
+                // Load or create database
                 this.database = this.loadDatabase();
                 this.user = this.loadUser();
+                this.saveUser();
             }
 
             loadDatabase() {
                 const data = localStorage.getItem('xdragon_db');
-                return data ? JSON.parse(data) : {
-                    users: {},
-                    messages: [],
-                    scripts: [],
-                    models: {
-                        'xdrg-lite': {
-                            name: 'Xdrg Lite',
-                            description: 'Fast & Lightweight model for quick scripts',
-                            speed: 100,
-                            complexity: 50,
-                            specialization: ['basic', 'movement', 'simple systems']
-                        },
-                        'xdrg-flash': {
-                            name: 'Xdrg Flash',
-                            description: 'High Performance model for complex systems',
-                            speed: 80,
-                            complexity: 80,
-                            specialization: ['advanced', 'combat', 'optimization']
-                        },
-                        'xdrg-coder': {
-                            name: 'Xdrg Coder',
-                            description: 'Advanced AI model for expert scripts',
-                            speed: 60,
-                            complexity: 100,
-                            specialization: ['expert', 'AI', 'complex algorithms']
+                if (data) {
+                    return JSON.parse(data);
+                } else {
+                    const newDb = {
+                        users: {},
+                        messages: [],
+                        scripts: [],
+                        models: {
+                            'xdrg-lite': {
+                                name: 'Xdrg Lite',
+                                description: 'Fast & Lightweight model for quick scripts',
+                                speed: 100,
+                                complexity: 50,
+                                specialization: ['basic', 'movement', 'simple systems']
+                            },
+                            'xdrg-flash': {
+                                name: 'Xdrg Flash',
+                                description: 'High Performance model for complex systems',
+                                speed: 80,
+                                complexity: 80,
+                                specialization: ['advanced', 'combat', 'optimization']
+                            },
+                            'xdrg-coder': {
+                                name: 'Xdrg Coder',
+                                description: 'Advanced AI model for expert scripts',
+                                speed: 60,
+                                complexity: 100,
+                                specialization: ['expert', 'AI', 'complex algorithms']
+                            }
                         }
-                    }
-                };
+                    };
+                    localStorage.setItem('xdragon_db', JSON.stringify(newDb));
+                    return newDb;
+                }
             }
 
             saveDatabase() {
@@ -482,16 +495,22 @@
 
             loadUser() {
                 const user = localStorage.getItem('xdragon_user');
-                return user ? JSON.parse(user) : {
-                    id: this.generateId(),
-                    username: 'User_' + Math.floor(Math.random() * 10000),
-                    createdAt: new Date().toISOString(),
-                    selectedModel: 'xdrg-lite',
-                    preferences: {
-                        theme: 'dark',
-                        autoSave: true
-                    }
-                };
+                if (user) {
+                    return JSON.parse(user);
+                } else {
+                    const newUser = {
+                        id: this.generateId(),
+                        username: 'User_' + Math.floor(Math.random() * 10000),
+                        createdAt: new Date().toISOString(),
+                        selectedModel: 'xdrg-lite',
+                        preferences: {
+                            theme: 'dark',
+                            autoSave: true
+                        }
+                    };
+                    localStorage.setItem('xdragon_user', JSON.stringify(newUser));
+                    return newUser;
+                }
             }
 
             saveUser() {
@@ -503,31 +522,35 @@
             }
 
             generateId() {
-                return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
 
-            saveMessage(message) {
-                this.database.messages.push({
+            saveMessage(content, role) {
+                const message = {
                     id: this.generateId(),
                     userId: this.user.id,
-                    content: message.content,
-                    role: message.role,
+                    content: content,
+                    role: role,
                     timestamp: new Date().toISOString()
-                });
+                };
+                this.database.messages.push(message);
                 this.saveDatabase();
+                return message;
             }
 
-            saveScript(script) {
-                this.database.scripts.push({
+            saveScript(name, code, description) {
+                const script = {
                     id: this.generateId(),
                     userId: this.user.id,
-                    name: script.name,
-                    code: script.code,
-                    description: script.description,
+                    name: name,
+                    code: code,
+                    description: description,
                     model: this.user.selectedModel,
                     timestamp: new Date().toISOString()
-                });
+                };
+                this.database.scripts.push(script);
                 this.saveDatabase();
+                return script;
             }
 
             getUserScripts() {
@@ -556,80 +579,163 @@
         class XdragonAI {
             constructor(cloudBase) {
                 this.cloudBase = cloudBase;
-                this.model = 'xdrg-lite';
-                this.scriptTemplates = {
-                    'speed_boost': {
-                        keywords: ['speed', 'boost', 'fast', 'run'],
-                        generate: () => `-- Speed Boost Script
+                this.model = cloudBase.user.selectedModel;
+            }
+
+            setModel(modelId) {
+                this.model = modelId;
+                this.cloudBase.setModel(modelId);
+            }
+
+            getModelName() {
+                return this.cloudBase.database.models[this.model].name;
+            }
+
+            generateResponse(prompt) {
+                const lowerPrompt = prompt.toLowerCase();
+                
+                // Check for specific script types
+                if (this.containsAny(lowerPrompt, ['speed', 'boost', 'fast', 'run', 'sprint'])) {
+                    return this.generateSpeedScript();
+                } else if (this.containsAny(lowerPrompt, ['teleport', 'tp', 'transport', 'portal', 'warp'])) {
+                    return this.generateTeleportScript();
+                } else if (this.containsAny(lowerPrompt, ['combat', 'fight', 'damage', 'attack', 'battle', 'sword', 'weapon'])) {
+                    return this.generateCombatScript();
+                } else if (this.containsAny(lowerPrompt, ['inventory', 'item', 'store', 'backpack', 'collect'])) {
+                    return this.generateInventoryScript();
+                } else if (this.containsAny(lowerPrompt, ['leaderboard', 'score', 'points', 'ranking', 'stats'])) {
+                    return this.generateLeaderboardScript();
+                } else if (this.containsAny(lowerPrompt, ['shop', 'buy', 'sell', 'money', 'currency', 'coins'])) {
+                    return this.generateShopScript();
+                } else if (this.containsAny(lowerPrompt, ['fly', 'flying', 'jump', 'double jump'])) {
+                    return this.generateFlyScript();
+                } else if (this.containsAny(lowerPrompt, ['camera', 'zoom', 'view', 'screen'])) {
+                    return this.generateCameraScript();
+                } else if (this.containsAny(lowerPrompt, ['part', 'spawn', 'create object', 'build'])) {
+                    return this.generatePartScript();
+                } else {
+                    return this.generateCustomScript(prompt);
+                }
+            }
+
+            containsAny(text, keywords) {
+                return keywords.some(keyword => text.includes(keyword));
+            }
+
+            generateSpeedScript() {
+                return {
+                    name: 'Speed Boost Script',
+                    description: 'Gives players a speed boost',
+                    code: `-- Speed Boost Script
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
         local Players = game:GetService("Players")
         local RunService = game:GetService("RunService")
-
+        
         local SPEED_MULTIPLIER = 2 -- Adjust this value
-
-        local function boostSpeed(player)
+        local BOOST_DURATION = 10 -- Duration in seconds
+        
+        local function applySpeedBoost(player)
             local character = player.Character
             if character then
                 local humanoid = character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     humanoid.WalkSpeed = 16 * SPEED_MULTIPLIER
+                    
+                    -- Reset speed after duration
+                    task.delay(BOOST_DURATION, function()
+                        if humanoid and humanoid.Parent then
+                            humanoid.WalkSpeed = 16
+                        end
+                    end)
                 end
             end
         end
-
+        
+        -- Apply to new players
         Players.PlayerAdded:Connect(function(player)
             player.CharacterAdded:Connect(function()
                 task.wait(1)
-                boostSpeed(player)
+                applySpeedBoost(player)
             end)
         end)
-
-        -- Boost existing players
+        
+        -- Apply to existing players
         for _, player in ipairs(Players:GetPlayers()) do
-            boostSpeed(player)
+            applySpeedBoost(player)
         end`
-                    },
-                    'teleport': {
-                        keywords: ['teleport', 'tp', 'transport', 'move to'],
-                        generate: () => `-- Teleport System
-        local Players = game:GetService("Players")
+                };
+            }
 
+            generateTeleportScript() {
+                return {
+                    name: 'Teleport System',
+                    description: 'Teleports players to different locations',
+                    code: `-- Teleport System
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        
+        -- Define teleport locations
         local TELEPORT_LOCATIONS = {
             Spawn = Vector3.new(0, 10, 0),
             Shop = Vector3.new(100, 10, 50),
-            Arena = Vector3.new(-50, 10, -100)
+            Arena = Vector3.new(-50, 10, -100),
+            Secret = Vector3.new(200, 50, 200)
         }
-
+        
+        -- Create remote event for teleporting
+        local teleportEvent = Instance.new("RemoteEvent")
+        teleportEvent.Name = "TeleportEvent"
+        teleportEvent.Parent = ReplicatedStorage
+        
         local function teleportPlayer(player, locationName)
             local character = player.Character
             if character then
                 local root = character:FindFirstChild("HumanoidRootPart")
                 if root and TELEPORT_LOCATIONS[locationName] then
                     root.CFrame = CFrame.new(TELEPORT_LOCATIONS[locationName])
+                    print(player.Name .. " teleported to " .. locationName)
                 end
             end
         end
-
-        -- Example usage
+        
+        -- Handle teleport requests from client
+        teleportEvent.OnServerEvent:Connect(function(player, locationName)
+            teleportPlayer(player, locationName)
+        end)
+        
+        -- Auto-teleport new players to spawn
         Players.PlayerAdded:Connect(function(player)
             player.CharacterAdded:Connect(function()
                 task.wait(2)
                 teleportPlayer(player, "Spawn")
             end)
         end)`
-                    },
-                    'combat': {
-                        keywords: ['combat', 'fight', 'damage', 'attack', 'battle'],
-                        generate: () => `-- Combat System
+                };
+            }
+
+            generateCombatScript() {
+                return {
+                    name: 'Combat System',
+                    description: 'Basic combat system with damage',
+                    code: `-- Combat System
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
         local Players = game:GetService("Players")
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
+        
         -- Create remote events
         local attackEvent = Instance.new("RemoteEvent")
         attackEvent.Name = "AttackEvent"
         attackEvent.Parent = ReplicatedStorage
-
+        
         local DAMAGE_AMOUNT = 10
-
+        local ATTACK_COOLDOWN = 1 -- Seconds
+        
+        local cooldowns = {}
+        
         local function dealDamage(attacker, target)
             local targetHumanoid = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
             if targetHumanoid then
@@ -637,28 +743,41 @@
                 print(attacker.Name .. " attacked " .. target.Name .. " for " .. DAMAGE_AMOUNT .. " damage!")
             end
         end
-
+        
+        local function canAttack(player)
+            local lastAttack = cooldowns[player.UserId] or 0
+            return os.time() - lastAttack >= ATTACK_COOLDOWN
+        end
+        
         attackEvent.OnServerEvent:Connect(function(player, targetPlayer)
-            if targetPlayer and targetPlayer ~= player then
+            if targetPlayer and targetPlayer ~= player and canAttack(player) then
                 dealDamage(player, targetPlayer)
+                cooldowns[player.UserId] = os.time()
             end
         end)`
-                    },
-                    'inventory': {
-                        keywords: ['inventory', 'item', 'store', 'backpack'],
-                        generate: () => `-- Inventory System
-        local Players = game:GetService("Players")
+                };
+            }
 
+            generateInventoryScript() {
+                return {
+                    name: 'Inventory System',
+                    description: 'Item management system',
+                    code: `-- Inventory System
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
+        local Players = game:GetService("Players")
+        
         local Inventory = {}
         Inventory.__index = Inventory
-
+        
         function Inventory.new(owner)
             local self = setmetatable({}, Inventory)
             self.Owner = owner
             self.Items = {}
+            self.MaxSlots = 20
             return self
         end
-
+        
         function Inventory:AddItem(itemName, quantity)
             quantity = quantity or 1
             if self.Items[itemName] then
@@ -667,7 +786,7 @@
                 self.Items[itemName] = quantity
             end
         end
-
+        
         function Inventory:RemoveItem(itemName, quantity)
             quantity = quantity or 1
             if self.Items[itemName] then
@@ -677,123 +796,257 @@
                 end
             end
         end
-
+        
         function Inventory:GetItemCount(itemName)
             return self.Items[itemName] or 0
         end
-
-        -- Example usage
+        
+        function Inventory:HasItem(itemName, quantity)
+            return self:GetItemCount(itemName) >= (quantity or 1)
+        end
+        
+        -- Store inventories for all players
         local playerInventories = {}
-
+        
         Players.PlayerAdded:Connect(function(player)
             playerInventories[player.UserId] = Inventory.new(player)
+            print(player.Name .. "'s inventory created!")
         end)
-
+        
         Players.PlayerRemoving:Connect(function(player)
             playerInventories[player.UserId] = nil
         end)`
-                    },
-                    'leaderboard': {
-                        keywords: ['leaderboard', 'score', 'points', 'ranking'],
-                        generate: () => `-- Leaderboard System
-        local Players = game:GetService("Players")
+                };
+            }
 
+            generateLeaderboardScript() {
+                return {
+                    name: 'Leaderboard System',
+                    description: 'Player stats and ranking',
+                    code: `-- Leaderboard System
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
+        local Players = game:GetService("Players")
+        
+        local STATS = {
+            "Score",
+            "Coins",
+            "Level",
+            "Wins"
+        }
+        
         local function createLeaderboard(player)
             local leaderstats = Instance.new("Folder")
             leaderstats.Name = "leaderstats"
             leaderstats.Parent = player
-
-            local score = Instance.new("NumberValue")
-            score.Name = "Score"
-            score.Value = 0
-            score.Parent = leaderstats
-
-            local coins = Instance.new("NumberValue")
-            coins.Name = "Coins"
-            coins.Value = 0
-            coins.Parent = leaderstats
+            
+            for _, statName in ipairs(STATS) do
+                local stat = Instance.new("NumberValue")
+                stat.Name = statName
+                stat.Value = 0
+                stat.Parent = leaderstats
+            end
         end
-
-        Players.PlayerAdded:Connect(createLeaderboard)`
-                    }
+        
+        Players.PlayerAdded:Connect(createLeaderboard)
+        
+        -- Example: Give points when player joins
+        Players.PlayerAdded:Connect(function(player)
+            task.wait(1)
+            local leaderstats = player:FindFirstChild("leaderstats")
+            if leaderstats then
+                local score = leaderstats:FindFirstChild("Score")
+                if score then
+                    score.Value += 10
+                end
+            end
+        end)`
                 };
             }
 
-            setModel(modelId) {
-                this.model = modelId;
-                this.cloudBase.setModel(modelId);
-            }
-
-            generateResponse(prompt) {
-                const lowerPrompt = prompt.toLowerCase();
-                let bestMatch = null;
-                let bestScore = 0;
-
-                for (const [key, template] of Object.entries(this.scriptTemplates)) {
-                    let score = 0;
-                    for (const keyword of template.keywords) {
-                        if (lowerPrompt.includes(keyword)) {
-                            score++;
-                        }
-                    }
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMatch = { key, template };
-                    }
-                }
-
-                if (bestMatch && bestScore > 0) {
-                    const code = bestMatch.template.generate();
-                    return {
-                        message: `Here's your ${bestMatch.key.replace('_', ' ')} script! I've optimized it using the ${this.getModelName()} model.`,
-                        code: code,
-                        scriptName: bestMatch.key.replace('_', ' ').toUpperCase() + ' Script'
-                    };
-                } else {
-                    return {
-                        message: `I couldn't find a specific template for that request. Here's a general-purpose script template instead. You can customize it based on your needs.`,
-                        code: this.generateGeneralScript(prompt),
-                        scriptName: 'Custom Script'
-                    };
-                }
-            }
-
-            generateGeneralScript(prompt) {
-                return `-- Custom Script for: ${prompt}
+            generateShopScript() {
+                return {
+                    name: 'Shop System',
+                    description: 'Buy and sell items',
+                    code: `-- Shop System
         -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
-        -- Date: ${new Date().toLocaleString()}
-
+        
         local Players = game:GetService("Players")
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        
+        -- Shop items
+        local SHOP_ITEMS = {
+            {name = "Sword", price = 100, description = "Basic sword"},
+            {name = "Shield", price = 150, description = "Basic shield"},
+            {name = "Potion", price = 50, description = "Health potion"}
+        }
+        
+        -- Create remote events
+        local buyEvent = Instance.new("RemoteEvent")
+        buyEvent.Name = "BuyEvent"
+        buyEvent.Parent = ReplicatedStorage
+        
+        local function buyItem(player, itemName)
+            local leaderstats = player:FindFirstChild("leaderstats")
+            if not leaderstats then return end
+            
+            local coins = leaderstats:FindFirstChild("Coins")
+            if not coins then return end
+            
+            for _, item in ipairs(SHOP_ITEMS) do
+                if item.name == itemName then
+                    if coins.Value >= item.price then
+                        coins.Value -= item.price
+                        print(player.Name .. " bought " .. item.name .. " for " .. item.price .. " coins!")
+                        return true
+                    else
+                        print(player.Name .. " doesn't have enough coins!")
+                        return false
+                    end
+                end
+            end
+        end
+        
+        buyEvent.OnServerEvent:Connect(buyItem)`
+                };
+            }
 
+            generateFlyScript() {
+                return {
+                    name: 'Fly Script',
+                    description: 'Allows players to fly',
+                    code: `-- Fly Script
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local UserInputService = game:GetService("UserInputService")
+        
+        local FLY_SPEED = 50
+        
+        local function enableFly(player)
+            local character = player.Character
+            if not character then return end
+            
+            local root = character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if not root or not humanoid then return end
+            
+            -- Create BodyVelocity and BodyGyro
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bodyVelocity.Velocity = Vector3.zero
+            bodyVelocity.Parent = root
+            
+            local bodyGyro = Instance.new("BodyGyro")
+            bodyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+            bodyGyro.CFrame = root.CFrame
+            bodyGyro.Parent = root
+            
+            -- Handle flying
+            RunService.Heartbeat:Connect(function()
+                if bodyVelocity and bodyVelocity.Parent then
+                    local camera = workspace.CurrentCamera
+                    local moveDirection = humanoid.MoveDirection
+                    
+                    if moveDirection.Magnitude > 0 then
+                        bodyVelocity.Velocity = (camera.CFrame.LookVector * moveDirection.Z + camera.CFrame.RightVector * moveDirection.X) * FLY_SPEED
+                    else
+                        bodyVelocity.Velocity = Vector3.zero
+                    end
+                    
+                    bodyGyro.CFrame = camera.CFrame
+                end
+            end)
+        end
+        
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function()
+                task.wait(1)
+                -- enableFly(player) -- Uncomment to auto-enable
+            end)
+        end)`
+                };
+            }
+
+            generateCameraScript() {
+                return {
+                    name: 'Camera System',
+                    description: 'Camera manipulation',
+                    code: `-- Camera System
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
+        local Players = game:GetService("Players")
+        
+        local function setupCamera(player)
+            player.CameraMinZoomDistance = 5
+            player.CameraMaxZoomDistance = 50
+            player.CameraMode = Enum.CameraMode.Classic
+            
+            print(player.Name .. "'s camera configured!")
+        end
+        
+        Players.PlayerAdded:Connect(setupCamera)`
+                };
+            }
+
+            generatePartScript() {
+                return {
+                    name: 'Part Spawner',
+                    description: 'Creates parts in the game',
+                    code: `-- Part Spawner
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        
+        local function createPart(position, color, size)
+            local part = Instance.new("Part")
+            part.Position = position or Vector3.new(0, 10, 0)
+            part.Color = color or Color3.fromRGB(255, 0, 0)
+            part.Size = size or Vector3.new(4, 1, 4)
+            part.Anchored = true
+            part.Parent = workspace
+            
+            return part
+        end
+        
+        -- Example: Create a platform
+        local platform = createPart(
+            Vector3.new(0, 10, 0),
+            Color3.fromRGB(0, 255, 0),
+            Vector3.new(10, 1, 10)
+        )`
+                };
+            }
+
+            generateCustomScript(prompt) {
+                return {
+                    name: 'Custom Script',
+                    description: prompt,
+                    code: `-- Custom Script for: ${prompt}
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        -- Date: ${new Date().toLocaleString()}
+        
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        
         -- Main function
         local function main()
             print("Script initialized!")
             
-            -- Add your custom logic here
-            -- This is where you can add your game mechanics
+            -- TODO: Add your custom logic here
         end
-
+        
         -- Start the script
         main()
-
+        
         -- Connect to player events
         Players.PlayerAdded:Connect(function(player)
             print(player.Name .. " joined the game!")
             
             player.CharacterAdded:Connect(function(character)
                 print(player.Name .. " spawned!")
-                -- Add character-specific logic here
             end)
-        end)`;
-            }
-
-            getModelName() {
-                return this.cloudBase.database.models[this.model].name;
-            }
-
-            getModelDescription() {
-                return this.cloudBase.database.models[this.model].description;
+        end)`
+                };
             }
         }
 
@@ -804,8 +1057,6 @@
         let currentTab = 'studio';
 
         // Initialize
-        cloudBase.saveUser();
-        ai.setModel(currentModel);
         updateUI();
 
         function updateUI() {
@@ -882,21 +1133,16 @@
             const response = ai.generateResponse(prompt);
             
             // Save message to cloud
-            cloudBase.saveMessage({ content: prompt, role: 'user' });
-            cloudBase.saveMessage({ content: response.message, role: 'ai' });
+            cloudBase.saveMessage(prompt, 'user');
+            cloudBase.saveMessage(response.description, 'ai');
             
             // Add AI response to chat
             setTimeout(() => {
-                addMessage(response.message, 'ai');
-                if (response.code) {
-                    addCodeBlock(response.code);
-                    // Save script to cloud
-                    cloudBase.saveScript({
-                        name: response.scriptName,
-                        code: response.code,
-                        description: prompt
-                    });
-                }
+                addMessage(`Here's your ${response.name}! (${response.description})`, 'ai');
+                addCodeBlock(response.code);
+                
+                // Save script to cloud
+                cloudBase.saveScript(response.name, response.code, response.description);
             }, 500);
             
             // Clear input
