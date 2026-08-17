@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Xdragon Hub AI - Roblox Creation Suite</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #00cec9;
+            --dark: #2d3436;
+            --darker: #1e272e;
+            --light: #dfe6e9;
+            --accent: #fd79a8;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --xdrg-lite: #74b9ff;
+            --xdrg-flash: #ffeaa7;
+            --xdrg-coder: #a29bfe;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 .icon {
+            font-size: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--darker);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-btn {
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .sidebar-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .model-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .model-card {
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            text-align: center;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .model-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
+        }
+
+        .model-xdrg-lite {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+        }
+
+        .model-xdrg-flash {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            color: #2d3436;
+        }
+
+        .model-xdrg-coder {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+            color: white;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 15px;
+            position: relative;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.ai {
+            background: #f5f5f5;
+            color: var(--dark);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message .timestamp {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .code-block {
+            background: var(--darker);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .code-block .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .prompt-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: none;
+            min-height: 60px;
+            max-height: 120px;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .send-btn {
+            padding: 15px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            background: #5f3dc4;
+            transform: scale(1.05);
+        }
+
+        .cloud-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .saved-scripts {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .saved-script-item {
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .saved-script-item:hover {
+            background: #e0e0e0;
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>
+                <span class="icon">🤖</span>
+                Dev Xdragon Hub AI
+            </h1>
+            <div class="user-info">
+                <span id="username">Loading...</span>
+                <div class="user-avatar" id="userAvatar">D</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <button class="sidebar-btn active" onclick="switchTab('studio')">
+                    🏗️ Studio Lite
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('ai')">
+                    🤖 AI Code Generator
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('saved')">
+                    💾 Saved Scripts
+                </button>
+                <button class="sidebar-btn" onclick="switchTab('settings')">
+                    ⚙️ Settings
+                </button>
+            </div>
+
+            <div class="workspace">
+                <div id="studioTab" class="tab-content">
+                    <h2>🏗️ Roblox Studio Lite</h2>
+                    <div class="model-selector">
+                        <div class="model-card model-xdrg-lite selected" onclick="selectModel('xdrg-lite')">
+                            <h3>⚡ Xdrg Lite</h3>
+                            <p>Fast & Lightweight</p>
+                            <small>For quick scripts</small>
+                        </div>
+                        <div class="model-card model-xdrg-flash" onclick="selectModel('xdrg-flash')">
+                            <h3>🚀 Xdrg Flash</h3>
+                            <p>High Performance</p>
+                            <small>For complex systems</small>
+                        </div>
+                        <div class="model-card model-xdrg-coder" onclick="selectModel('xdrg-coder')">
+                            <h3>💻 Xdrg Coder</h3>
+                            <p>Advanced AI</p>
+                            <small>For expert scripts</small>
+                        </div>
+                    </div>
+                    <div id="modelInfo">
+                        <h3>Selected Model: Xdrg Lite</h3>
+                        <p>Optimized for speed and efficiency. Best for simple scripts and rapid prototyping.</p>
+                    </div>
+                </div>
+
+                <div id="aiTab" class="tab-content" style="display: none;">
+                    <h2>🤖 AI Code Generator</h2>
+                    <div class="chat-container" id="chatContainer">
+                        <div class="message ai">
+                            <strong>Dev Xdragon Hub AI:</strong><br>
+                            Hello! I'm your AI-powered Roblox scripting assistant. Describe what you want to create, and I'll generate the code for you!
+                            <div class="timestamp">Just now</div>
+                        </div>
+                    </div>
+                    <div class="input-container">
+                        <textarea class="prompt-input" id="promptInput" placeholder="Describe your Roblox script... (e.g., 'Create a speed boost script', 'Make a teleport system', 'Generate a combat system')"></textarea>
+                        <button class="send-btn" onclick="sendPrompt()">Send 🚀</button>
+                    </div>
+                </div>
+
+                <div id="savedTab" class="tab-content" style="display: none;">
+                    <h2>💾 Saved Scripts</h2>
+                    <div class="saved-scripts" id="savedScripts">
+                        <p>No saved scripts yet. Generate some code first!</p>
+                    </div>
+                </div>
+
+                <div id="settingsTab" class="tab-content" style="display: none;">
+                    <h2>⚙️ Settings</h2>
+                    <div class="saved-scripts">
+                        <h3>Account Settings</h3>
+                        <p>Username: <span id="settingsUsername">Loading...</span></p>
+                        <p>Cloud Storage: <span style="color: green;">Connected ✅</span></p>
+                        <p>AI Model: <span id="settingsModel">Xdrg Lite</span></p>
+                        <button class="send-btn" onclick="clearCloud()" style="margin-top: 20px;">Clear Cloud Data 🗑️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cloud-status">
+        <div class="status-dot"></div>
+        <span>CloudBase Connected</span>
+    </div>
+
+    <script>
+        // ==================== CLOUDBASE/DATASTORE ====================
+        class CloudBase {
+            constructor() {
+                this.database = this.loadDatabase();
+                this.user = this.loadUser();
+            }
+
+            loadDatabase() {
+                const data = localStorage.getItem('xdragon_db');
+                return data ? JSON.parse(data) : {
+                    users: {},
+                    messages: [],
+                    scripts: [],
+                    models: {
+                        'xdrg-lite': {
+                            name: 'Xdrg Lite',
+                            description: 'Fast & Lightweight model for quick scripts',
+                            speed: 100,
+                            complexity: 50,
+                            specialization: ['basic', 'movement', 'simple systems']
+                        },
+                        'xdrg-flash': {
+                            name: 'Xdrg Flash',
+                            description: 'High Performance model for complex systems',
+                            speed: 80,
+                            complexity: 80,
+                            specialization: ['advanced', 'combat', 'optimization']
+                        },
+                        'xdrg-coder': {
+                            name: 'Xdrg Coder',
+                            description: 'Advanced AI model for expert scripts',
+                            speed: 60,
+                            complexity: 100,
+                            specialization: ['expert', 'AI', 'complex algorithms']
+                        }
+                    }
+                };
+            }
+
+            saveDatabase() {
+                localStorage.setItem('xdragon_db', JSON.stringify(this.database));
+            }
+
+            loadUser() {
+                const user = localStorage.getItem('xdragon_user');
+                return user ? JSON.parse(user) : {
+                    id: this.generateId(),
+                    username: 'User_' + Math.floor(Math.random() * 10000),
+                    createdAt: new Date().toISOString(),
+                    selectedModel: 'xdrg-lite',
+                    preferences: {
+                        theme: 'dark',
+                        autoSave: true
+                    }
+                };
+            }
+
+            saveUser() {
+                localStorage.setItem('xdragon_user', JSON.stringify(this.user));
+                if (!this.database.users[this.user.id]) {
+                    this.database.users[this.user.id] = this.user;
+                    this.saveDatabase();
+                }
+            }
+
+            generateId() {
+                return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            saveMessage(message) {
+                this.database.messages.push({
+                    id: this.generateId(),
+                    userId: this.user.id,
+                    content: message.content,
+                    role: message.role,
+                    timestamp: new Date().toISOString()
+                });
+                this.saveDatabase();
+            }
+
+            saveScript(script) {
+                this.database.scripts.push({
+                    id: this.generateId(),
+                    userId: this.user.id,
+                    name: script.name,
+                    code: script.code,
+                    description: script.description,
+                    model: this.user.selectedModel,
+                    timestamp: new Date().toISOString()
+                });
+                this.saveDatabase();
+            }
+
+            getUserScripts() {
+                return this.database.scripts.filter(s => s.userId === this.user.id);
+            }
+
+            getUserMessages() {
+                return this.database.messages.filter(m => m.userId === this.user.id);
+            }
+
+            clearUserData() {
+                this.database.messages = this.database.messages.filter(m => m.userId !== this.user.id);
+                this.database.scripts = this.database.scripts.filter(s => s.userId !== this.user.id);
+                this.saveDatabase();
+            }
+
+            setModel(modelId) {
+                this.user.selectedModel = modelId;
+                this.saveUser();
+                this.database.users[this.user.id] = this.user;
+                this.saveDatabase();
+            }
+        }
+
+        // ==================== AI ENGINE ====================
+        class XdragonAI {
+            constructor(cloudBase) {
+                this.cloudBase = cloudBase;
+                this.model = 'xdrg-lite';
+                this.scriptTemplates = {
+                    'speed_boost': {
+                        keywords: ['speed', 'boost', 'fast', 'run'],
+                        generate: () => `-- Speed Boost Script
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+
+        local SPEED_MULTIPLIER = 2 -- Adjust this value
+
+        local function boostSpeed(player)
+            local character = player.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = 16 * SPEED_MULTIPLIER
+                end
+            end
+        end
+
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function()
+                task.wait(1)
+                boostSpeed(player)
+            end)
+        end)
+
+        -- Boost existing players
+        for _, player in ipairs(Players:GetPlayers()) do
+            boostSpeed(player)
+        end`
+                    },
+                    'teleport': {
+                        keywords: ['teleport', 'tp', 'transport', 'move to'],
+                        generate: () => `-- Teleport System
+        local Players = game:GetService("Players")
+
+        local TELEPORT_LOCATIONS = {
+            Spawn = Vector3.new(0, 10, 0),
+            Shop = Vector3.new(100, 10, 50),
+            Arena = Vector3.new(-50, 10, -100)
+        }
+
+        local function teleportPlayer(player, locationName)
+            local character = player.Character
+            if character then
+                local root = character:FindFirstChild("HumanoidRootPart")
+                if root and TELEPORT_LOCATIONS[locationName] then
+                    root.CFrame = CFrame.new(TELEPORT_LOCATIONS[locationName])
+                end
+            end
+        end
+
+        -- Example usage
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function()
+                task.wait(2)
+                teleportPlayer(player, "Spawn")
+            end)
+        end)`
+                    },
+                    'combat': {
+                        keywords: ['combat', 'fight', 'damage', 'attack', 'battle'],
+                        generate: () => `-- Combat System
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Create remote events
+        local attackEvent = Instance.new("RemoteEvent")
+        attackEvent.Name = "AttackEvent"
+        attackEvent.Parent = ReplicatedStorage
+
+        local DAMAGE_AMOUNT = 10
+
+        local function dealDamage(attacker, target)
+            local targetHumanoid = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
+            if targetHumanoid then
+                targetHumanoid:TakeDamage(DAMAGE_AMOUNT)
+                print(attacker.Name .. " attacked " .. target.Name .. " for " .. DAMAGE_AMOUNT .. " damage!")
+            end
+        end
+
+        attackEvent.OnServerEvent:Connect(function(player, targetPlayer)
+            if targetPlayer and targetPlayer ~= player then
+                dealDamage(player, targetPlayer)
+            end
+        end)`
+                    },
+                    'inventory': {
+                        keywords: ['inventory', 'item', 'store', 'backpack'],
+                        generate: () => `-- Inventory System
+        local Players = game:GetService("Players")
+
+        local Inventory = {}
+        Inventory.__index = Inventory
+
+        function Inventory.new(owner)
+            local self = setmetatable({}, Inventory)
+            self.Owner = owner
+            self.Items = {}
+            return self
+        end
+
+        function Inventory:AddItem(itemName, quantity)
+            quantity = quantity or 1
+            if self.Items[itemName] then
+                self.Items[itemName] += quantity
+            else
+                self.Items[itemName] = quantity
+            end
+        end
+
+        function Inventory:RemoveItem(itemName, quantity)
+            quantity = quantity or 1
+            if self.Items[itemName] then
+                self.Items[itemName] -= quantity
+                if self.Items[itemName] <= 0 then
+                    self.Items[itemName] = nil
+                end
+            end
+        end
+
+        function Inventory:GetItemCount(itemName)
+            return self.Items[itemName] or 0
+        end
+
+        -- Example usage
+        local playerInventories = {}
+
+        Players.PlayerAdded:Connect(function(player)
+            playerInventories[player.UserId] = Inventory.new(player)
+        end)
+
+        Players.PlayerRemoving:Connect(function(player)
+            playerInventories[player.UserId] = nil
+        end)`
+                    },
+                    'leaderboard': {
+                        keywords: ['leaderboard', 'score', 'points', 'ranking'],
+                        generate: () => `-- Leaderboard System
+        local Players = game:GetService("Players")
+
+        local function createLeaderboard(player)
+            local leaderstats = Instance.new("Folder")
+            leaderstats.Name = "leaderstats"
+            leaderstats.Parent = player
+
+            local score = Instance.new("NumberValue")
+            score.Name = "Score"
+            score.Value = 0
+            score.Parent = leaderstats
+
+            local coins = Instance.new("NumberValue")
+            coins.Name = "Coins"
+            coins.Value = 0
+            coins.Parent = leaderstats
+        end
+
+        Players.PlayerAdded:Connect(createLeaderboard)`
+                    }
+                };
+            }
+
+            setModel(modelId) {
+                this.model = modelId;
+                this.cloudBase.setModel(modelId);
+            }
+
+            generateResponse(prompt) {
+                const lowerPrompt = prompt.toLowerCase();
+                let bestMatch = null;
+                let bestScore = 0;
+
+                for (const [key, template] of Object.entries(this.scriptTemplates)) {
+                    let score = 0;
+                    for (const keyword of template.keywords) {
+                        if (lowerPrompt.includes(keyword)) {
+                            score++;
+                        }
+                    }
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = { key, template };
+                    }
+                }
+
+                if (bestMatch && bestScore > 0) {
+                    const code = bestMatch.template.generate();
+                    return {
+                        message: `Here's your ${bestMatch.key.replace('_', ' ')} script! I've optimized it using the ${this.getModelName()} model.`,
+                        code: code,
+                        scriptName: bestMatch.key.replace('_', ' ').toUpperCase() + ' Script'
+                    };
+                } else {
+                    return {
+                        message: `I couldn't find a specific template for that request. Here's a general-purpose script template instead. You can customize it based on your needs.`,
+                        code: this.generateGeneralScript(prompt),
+                        scriptName: 'Custom Script'
+                    };
+                }
+            }
+
+            generateGeneralScript(prompt) {
+                return `-- Custom Script for: ${prompt}
+        -- Generated by Dev Xdragon Hub AI (${this.getModelName()})
+        -- Date: ${new Date().toLocaleString()}
+
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+        -- Main function
+        local function main()
+            print("Script initialized!")
+            
+            -- Add your custom logic here
+            -- This is where you can add your game mechanics
+        end
+
+        -- Start the script
+        main()
+
+        -- Connect to player events
+        Players.PlayerAdded:Connect(function(player)
+            print(player.Name .. " joined the game!")
+            
+            player.CharacterAdded:Connect(function(character)
+                print(player.Name .. " spawned!")
+                -- Add character-specific logic here
+            end)
+        end)`;
+            }
+
+            getModelName() {
+                return this.cloudBase.database.models[this.model].name;
+            }
+
+            getModelDescription() {
+                return this.cloudBase.database.models[this.model].description;
+            }
+        }
+
+        // ==================== APP INITIALIZATION ====================
+        const cloudBase = new CloudBase();
+        const ai = new XdragonAI(cloudBase);
+        let currentModel = cloudBase.user.selectedModel;
+        let currentTab = 'studio';
+
+        // Initialize
+        cloudBase.saveUser();
+        ai.setModel(currentModel);
+        updateUI();
+
+        function updateUI() {
+            document.getElementById('username').textContent = cloudBase.user.username;
+            document.getElementById('userAvatar').textContent = cloudBase.user.username[0].toUpperCase();
+            document.getElementById('settingsUsername').textContent = cloudBase.user.username;
+            document.getElementById('settingsModel').textContent = cloudBase.database.models[currentModel].name;
+            updateModelSelection();
+            updateSavedScripts();
+        }
+
+        function updateModelSelection() {
+            const cards = document.querySelectorAll('.model-card');
+            cards.forEach(card => {
+                card.classList.remove('selected');
+            });
+            const selectedCard = document.querySelector(`[onclick="selectModel('${currentModel}')"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            const modelInfo = document.getElementById('modelInfo');
+            const modelData = cloudBase.database.models[currentModel];
+            modelInfo.innerHTML = `
+                <h3>Selected Model: ${modelData.name}</h3>
+                <p>${modelData.description}</p>
+                <p><strong>Speed:</strong> ${modelData.speed}% | <strong>Complexity:</strong> ${modelData.complexity}%</p>
+                <p><strong>Specializations:</strong> ${modelData.specialization.join(', ')}</p>
+            `;
+        }
+
+        function selectModel(modelId) {
+            currentModel = modelId;
+            ai.setModel(modelId);
+            updateUI();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            
+            switch(tab) {
+                case 'studio':
+                    document.getElementById('studioTab').style.display = 'block';
+                    document.querySelector('.sidebar-btn:nth-child(1)').classList.add('active');
+                    break;
+                case 'ai':
+                    document.getElementById('aiTab').style.display = 'block';
+                    document.querySelector('.sidebar-btn:nth-child(2)').classList.add('active');
+                    break;
+                case 'saved':
+                    document.getElementById('savedTab').style.display = 'block';
+                    document.querySelector('.sidebar-btn:nth-child(3)').classList.add('active');
+                    updateSavedScripts();
+                    break;
+                case 'settings':
+                    document.getElementById('settingsTab').style.display = 'block';
+                    document.querySelector('.sidebar-btn:nth-child(4)').classList.add('active');
+                    break;
+            }
+        }
+
+        function sendPrompt() {
+            const promptInput = document.getElementById('promptInput');
+            const prompt = promptInput.value.trim();
+            
+            if (!prompt) return;
+            
+            // Add user message to chat
+            addMessage(prompt, 'user');
+            
+            // Generate AI response
+            const response = ai.generateResponse(prompt);
+            
+            // Save message to cloud
+            cloudBase.saveMessage({ content: prompt, role: 'user' });
+            cloudBase.saveMessage({ content: response.message, role: 'ai' });
+            
+            // Add AI response to chat
+            setTimeout(() => {
+                addMessage(response.message, 'ai');
+                if (response.code) {
+                    addCodeBlock(response.code);
+                    // Save script to cloud
+                    cloudBase.saveScript({
+                        name: response.scriptName,
+                        code: response.code,
+                        description: prompt
+                    });
+                }
+            }, 500);
+            
+            // Clear input
+            promptInput.value = '';
+        }
+
+        function addMessage(text, role) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            if (role === 'ai') {
+                messageDiv.innerHTML = `<strong>Dev Xdragon Hub AI:</strong><br>${text}<div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+            } else {
+                messageDiv.innerHTML = `${text}<div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addCodeBlock(code) {
+            const chatContainer = document.getElementById('chatContainer');
+            const codeDiv = document.createElement('div');
+            codeDiv.className = 'code-block';
+            codeDiv.innerHTML = `<button class="copy-btn" onclick="copyCode(this)">Copy 📋</button><pre>${escapeHtml(code)}</pre>`;
+            chatContainer.appendChild(codeDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function copyCode(btn) {
+            const pre = btn.nextElementSibling;
+            const code = pre.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied! ✅';
+                setTimeout(() => {
+                    btn.textContent = 'Copy 📋';
+                }, 2000);
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateSavedScripts() {
+            const savedScripts = document.getElementById('savedScripts');
+            const scripts = cloudBase.getUserScripts();
+            
+            if (scripts.length === 0) {
+                savedScripts.innerHTML = '<p>No saved scripts yet. Generate some code first!</p>';
+                return;
+            }
+            
+            savedScripts.innerHTML = '';
+            scripts.reverse().forEach(script => {
+                const scriptItem = document.createElement('div');
+                scriptItem.className = 'saved-script-item';
+                scriptItem.innerHTML = `
+                    <strong>${script.name}</strong><br>
+                    <small>${script.description} | ${new Date(script.timestamp).toLocaleString()}</small>
+                `;
+                scriptItem.onclick = () => viewScript(script);
+                savedScripts.appendChild(scriptItem);
+            });
+        }
+
+        function viewScript(script) {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+            addMessage(`Loaded saved script: ${script.name}`, 'ai');
+            addCodeBlock(script.code);
+            switchTab('ai');
+        }
+
+        function clearCloud() {
+            if (confirm('Are you sure you want to clear all your cloud data?')) {
+                cloudBase.clearUserData();
+                updateUI();
+                alert('Cloud data cleared successfully!');
+            }
+        }
+
+        // Handle Enter key for prompt input
+        document.getElementById('promptInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendPrompt();
+            }
+        });
+
+        // Auto-save user data
+        window.addEventListener('beforeunload', function() {
+            cloudBase.saveUser();
+            cloudBase.saveDatabase();
+        });
+
+        console.log('🚀 Dev Xdragon Hub AI initialized successfully!');
+        console.log('📦 CloudBase connected with user:', cloudBase.user.username);
+        console.log('🤖 AI Models available:', Object.keys(cloudBase.database.models));
+    </script>
+</body>
+</html>
